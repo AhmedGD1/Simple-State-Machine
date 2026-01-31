@@ -23,6 +23,7 @@ var state_time: float = 0.0
 
 ## Locks/unlocks the state machine to prevent transitions.
 ## When locked, no automatic or manual transitions can occur.
+## Important note: state.exit() doesn't work while locked is true if so, consider using state.on_timeout() instead
 var locked: bool
 
 var has_previous_state: bool:
@@ -149,6 +150,7 @@ func _state_timeout() -> bool:
 		push_error("Invalid timeout state id: %s" % timeout_id)
 		return false
 	
+	_call_safe(current_state.timeout_callback)
 	transition_to(timeout_id)
 	state_timeout.emit(from_id)
 	
@@ -162,6 +164,7 @@ class State:
 	var update: Callable
 	var enter: Callable
 	var exit: Callable
+	var timeout_callback: Callable
 	
 	var transitions: Array[Transition] = []
 	
@@ -172,16 +175,20 @@ class State:
 	func _init(new_id: int) -> void:
 		id = new_id
 	
-	func on_update(method: Callable) -> State:
-		update = method
+	func on_update(callback: Callable) -> State:
+		update = callback
 		return self
 	
-	func on_enter(method: Callable) -> State:
-		enter = method
+	func on_enter(callback: Callable) -> State:
+		enter = callback
 		return self
 	
-	func on_exit(method: Callable) -> State:
-		exit = method
+	func on_exit(callback: Callable) -> State:
+		exit = callback
+		return self
+	
+	func on_timeout(callback: Callable) -> State:
+		timeout_callback = callback
 		return self
 	
 	func timeout_after(duration: float, to: int) -> State:
@@ -210,4 +217,14 @@ class Transition:
 	func on_condition(method: Callable) -> Transition:
 		condition = method
 		return self
+
+
+
+
+
+
+
+
+
+
 
