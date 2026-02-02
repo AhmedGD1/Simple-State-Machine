@@ -119,7 +119,7 @@ public partial class SimpleStateMachine<T> : RefCounted where T : Enum
     {
         foreach (var transition in transitions)
         {
-            if (transition.Condition?.Invoke(this) ?? false)
+            if (transition.Condition?.Invoke(stateTime) ?? false)
             {
                 TransitionTo(transition.To);
                 return;
@@ -215,7 +215,7 @@ public class Transition<T> where T : Enum
     public T From { get; private set;}
     public T To { get; private set; }
     
-    public Predicate<SimpleStateMachine<T>> Condition { get; private set; }
+    public Predicate<float> Condition { get; private set; }
 
     public Transition(T from, T to)
     {
@@ -223,7 +223,7 @@ public class Transition<T> where T : Enum
         To = to;
     }
 
-    public Transition<T> When(Predicate<SimpleStateMachine<T>> condition)
+    public Transition<T> When(Predicate<float> condition)
     {
         Condition = condition;
         return this;
