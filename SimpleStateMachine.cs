@@ -6,15 +6,15 @@ namespace Utilities.Logic;
 
 public partial class SimpleStateMachine<T> : RefCounted where T : Enum
 {
+    public event Action<T, T> StateChanged;
+    public event Action<T> StateTimeout;
+    
     public T CurrentStateId => currentState != null ? currentState.Id : default;
     public T PreviousId => previousId;
     public float StateTime => stateTime;
     public bool HasPreviousState => !previousId.Equals(default(T));
 
     public bool locked;
-
-    public event Action<T, T> StateChanged;
-    public event Action<T> StateTimeout;
 
     private readonly Dictionary<T, State<T>> states = new();
     private readonly List<Transition<T>> globalTransitions = new();
