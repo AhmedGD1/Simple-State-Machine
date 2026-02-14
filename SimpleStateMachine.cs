@@ -2,6 +2,8 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
+namespace Utilities.Logic;
+
 public partial class SimpleStateMachine<T> : RefCounted where T : Enum
 {
     public T CurrentStateId => currentState != null ? currentState.Id : default;
@@ -119,8 +121,12 @@ public partial class SimpleStateMachine<T> : RefCounted where T : Enum
     {
         foreach (var transition in transitions)
         {
+            if (!(transition.Guard?.Invoke(stateTime) ?? true))
+                continue;
+            
             if (transition.Condition?.Invoke(stateTime) ?? false)
             {
+                transition.OnTransition?.Invoke();
                 TransitionTo(transition.To);
                 return;
             }
@@ -216,6 +222,9 @@ public class Transition<T> where T : Enum
     public T To { get; private set; }
     
     public Predicate<float> Condition { get; private set; }
+    public Predicate<float> Guard { get; private set; }
+    
+    public Action OnTransition { get; private set; }
 
     public Transition(T from, T to)
     {
@@ -226,6 +235,18 @@ public class Transition<T> where T : Enum
     public Transition<T> When(Predicate<float> condition)
     {
         Condition = condition;
+        return this;
+    }
+
+    public Transition<T> IfOnly(Predicate<float> guard)
+    {
+        Guard = guard;
+        return this;
+    }
+
+    public Transition<T> Do(Action callback)
+    {
+        OnTransition = callback;
         return this;
     }
 }
