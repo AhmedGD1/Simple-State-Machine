@@ -55,17 +55,18 @@ public partial class SimpleStateMachine<T> : RefCounted where T : Enum
 
         if (currentState == null)
             return;
+            
         currentState.Update?.Invoke(dt);
         stateTime += dt;
 
         if (locked)
             return;
-        
-        if (!OnStateTimeout())
-        {
-            UpdateTransitions(globalTransitions);
-            UpdateTransitions(currentState.Transitions);
-        }
+
+        if (OnStateTimeout())
+            return;
+
+        UpdateTransitions(globalTransitions);
+        UpdateTransitions(currentState.Transitions);
     }
 
     public State<T> AddState(T id)
@@ -121,7 +122,7 @@ public partial class SimpleStateMachine<T> : RefCounted where T : Enum
     {
         foreach (var transition in transitions)
         {
-            if (!(transition.Guard?.Invoke(stateTime) ?? true))
+            if (transition.Guard != null && !transition.Guard(stateTime))
                 continue;
             
             if (transition.Condition?.Invoke(stateTime) ?? false)
